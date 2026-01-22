@@ -1,0 +1,87 @@
+# Databricks notebook source
+from datetime import date
+from dateutil.relativedelta import relativedelta
+
+# COMMAND ----------
+
+# go to  first day of the month two month ago
+
+two_month_ago_start = date.today().replace(day = 1) - relativedelta(months=2)
+
+# COMMAND ----------
+
+
+
+df_trips = spark.read.table("nyctaxi.01_silver.yellow_trips_cleansed").filter(f"processed_timestamp >= '{two_month_ago_start}'")
+
+# COMMAND ----------
+
+df_zone = spark.read.table("nyctaxi.01_silver.taxi_zone_lookup").filter(f"effective_date <= '{two_month_ago_start}'")
+
+
+# COMMAND ----------
+
+df_join_1 = df_trips.join(
+                df_zone, 
+                df_trips.pu_location_id == df_zone.location_id,
+                "left"
+                ).select(
+                    df_trips.vendor,
+                    df_trips.tpep_pickup_datetime,
+                    df_trips.tpep_dropoff_datetime,
+                    df_trips.trip_duration,
+                    df_trips.passenger_count,
+                    df_trips.trip_distance,
+                    df_trips.rate_type,
+                    df_zone.borough.alias("pu_borough"),   # pickup borough
+                    df_zone.zone.alias("pu_zone"),         # pickup zone
+                    df_trips.do_location_id,                # dropoff location ID for next join
+                    df_trips.payment_type,
+                    df_trips.fare_amount,
+                    df_trips.extra,
+                    df_trips.mta_tax,
+                    df_trips.tolls_amount,
+                    df_trips.improvement_surcharge,
+                    df_trips.total_amount,
+                    df_trips.congestion_surcharge,
+                    df_trips.airport_fee,  
+                    df_trips.cbd_congestion_fee,
+                    df_trips.processed_timestamp
+                )
+                    
+
+# COMMAND ----------
+
+df_join_final = df_join_1.join(
+                                df_zone, 
+                                df_join_1.do_location_id == df_zone.location_id,
+                                "left"
+                                ).select(
+                                            df_join_1.vendor,
+                                            df_join_1.tpep_pickup_datetime,
+                                            df_join_1.tpep_dropoff_datetime,
+                                            df_trips.trip_duration,
+                                            df_join_1.passenger_count,
+                                            df_join_1.trip_distance,
+                                            df_join_1.rate_type,
+                                            df_join_1.pu_borough,
+                                            df_zone.borough.alias("do_borough"), # dropoff borough
+                                            df_join_1.pu_zone,
+                                            df_zone.zone.alias("do_zone"),       # dropoff zone
+                                            df_join_1.payment_type,
+                                            df_join_1.fare_amount,
+                                            df_join_1.extra,
+                                            df_join_1.mta_tax,
+                                            df_join_1.tolls_amount,
+                                            df_join_1.improvement_surcharge,
+                                            df_join_1.total_amount,
+                                            df_join_1.congestion_surcharge,
+                                            df_join_1.airport_fee,  
+                                            df_join_1.cbd_congestion_fee,
+                                            df_join_1.processed_timestamp
+                                )
+
+
+# COMMAND ----------
+
+df_join_final.write.mode("append").saveAsTable("nyctaxi.01_silver.yellow_trips_enriched")
