@@ -1,12 +1,15 @@
 # Databricks notebook source
+import sys
+import os
 from pyspark.sql.functions import count,sum,avg,min,max,round
 from datetime import date
 from dateutil.relativedelta import relativedelta
+from modules.utils.date_utils import get_mont_start_n_moth_ago
 
 # COMMAND ----------
 
 # get the first day of the month two month ago 
-two_month_ago_start = date.today().replace(day = 1) - relativedelta(months=2)
+two_month_ago_start = get_mont_start_n_moth_ago(2)
 
 # COMMAND ----------
 
