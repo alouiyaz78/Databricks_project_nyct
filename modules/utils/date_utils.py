@@ -14,7 +14,7 @@ def get_target_yyyy_mm(months_ago: int):
     target_date = date.today() - relativedelta(months=months_ago)
     return target_date.strftime("%Y-%m")
 
-def get_month_start_n_month_ago(months_ago: int):
+def get_month_start_n_months_ago(months_ago: int):
     """
     Returns the first day of the month for a date that is a specified number of months prior to the current month.
 
