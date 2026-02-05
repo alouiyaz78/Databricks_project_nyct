@@ -32,4 +32,16 @@ from delta.tables import DeltaTable
 
 dt = DeltaTable.forName(spark, "nyctaxi.`03_gold`.daily_trip_summary")
 
+
 dt.delete(f"pickup_date >= '{date_from}'")
+
+
+# COMMAND ----------
+
+spark.read.table("nyctaxi.`01_silver`.taxi_zone_lookup").display()
+
+dt.delete(f"pickup_date >= '{date_from}'")
+
+
+
+
