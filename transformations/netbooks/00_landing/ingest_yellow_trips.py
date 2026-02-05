@@ -1,6 +1,11 @@
 # Databricks notebook source
 import sys
 import os
+import urllib.request
+import shutil
+from datetime import datetime
+from datetime import date, datetime, timezone
+from dateutil.relativedelta import relativedelta
 
 # Go two levels up to reach the project root
 project_root = os.path.abspath(os.path.join(os.getcwd(), "../.."))
@@ -9,8 +14,7 @@ if project_root not in sys.path:
     sys.path.append(project_root)
 
 # COMMAND ----------
-from datetime import date
-from dateutil.relativedelta import relativedelta
+
 
 from modules.utils.date_utils import get_target_yyyy_mm
 from modules.data_loader.file_downloader import download_file  
@@ -29,25 +33,9 @@ dir_path = f"/Volumes/nyctaxi/00_landing/data_sources/nyctaxi_yellow/{formatted_
 # File path (Volume path)
 local_path = f"{dir_path}/yellow_tripdata_{formatted_date}.parquet"
 
-# DBFS path (used for dbutils.fs.ls)
-dbfs_path = f"dbfs:{local_path}"
 
-# Local filesystem path (used for Python file writing)
-local_fs_path = f"/dbfs{local_path}"
 
-# COMMAND ----------
-# Define the URL
 
-url = f"https://d37ci6vzurychx.cloudfront.net/trip-data/yellow_tripdata_{formatted_date}.parquet"
-
-print("=======================================")
-print(f"Target month: {formatted_date}")
-print(f"Download URL: {url}")
-print(f"Volume folder path: {dir_path}")
-print(f"Volume file path: {local_path}")
-print(f"DBFS path (for ls): {dbfs_path}")
-print(f"Local FS path (for writing): {local_fs_path}")
-print("=======================================")
 
 # COMMAND ----------
 # Check if the file already exists
