@@ -51,27 +51,26 @@ print("=======================================")
 
 # COMMAND ----------
 # Check if the file already exists
-
 try:
-    dbutils.fs.ls(dbfs_path)
+    # Check if the file already exists
+    dbutils.fs.ls(local_path)
 
     # If the file already exists then set continue_downstream to no
     dbutils.jobs.taskValues.set(key="continue_downstream", value="no")
-    print("File already downloaded, aborting downstream tasks.")
-    print("continue_downstream = no")
-
-except Exception:
+    print("File already downloaded, aborting downstream tasks")
+except:
     try:
-        # Download the file into the Volume folder
-        download_file(url, f"/dbfs{dir_path}", local_fs_path)
+        # Construct the URL for the Parquet file corresponding to this month
+        url = f"https://d37ci6vzurychx.cloudfront.net/trip-data/yellow_tripdata_{formatted_date}.parquet"
 
+        # Download the file
+        # Create the local directory for this date's data
+        download_file(url, dir_path, local_path)
+        
         # Set continue_downstream to yes if the file was loaded
         dbutils.jobs.taskValues.set(key="continue_downstream", value="yes")
-        print("File successfully uploaded in current run.")
-        print("continue_downstream = yes")
-
+        print("File succesfully uploaded in current run")
     except Exception as e:
         # Set continue downstream to no if the file was not loaded
         dbutils.jobs.taskValues.set(key="continue_downstream", value="no")
         print(f"File download failed: {str(e)}")
-        print("continue_downstream = no")
