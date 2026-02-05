@@ -12,7 +12,7 @@ if project_root not in sys.path:
 from datetime import date
 from dateutil.relativedelta import relativedelta
 
-from modules.utils.date_utils import get_target_yyyymm
+from modules.utils.date_utils import get_target_yyyy_mm
 from modules.data_loader.file_downloader import download_file
 
 # COMMAND ----------
