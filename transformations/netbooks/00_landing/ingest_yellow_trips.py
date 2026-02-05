@@ -15,48 +15,29 @@ formatted_date = get_target_yyyy_mm(2)
 dir_path = f"/Volumes/nyctaxi/00_landing/data_sources/nyctaxi_yellow/{formatted_date}"
 local_path = f"{dir_path}/yellow_tripdata_{formatted_date}.parquet"
 
-dbfs_dir = f"dbfs:{dir_path}"
-dbfs_file = f"dbfs:{local_path}"
 
-url = f"https://d37ci6vzurychx.cloudfront.net/trip-data/yellow_tripdata_{formatted_date}.parquet"
-
-print(f"formatted_date=[{formatted_date}]")
-print(f"url=[{url}]")
-print(f"dbfs_file=[{dbfs_file}]")
-
-# COMMAND ----------
-def set_gate(value: str) -> None:
-    v = (value or "").strip().lower()
-    dbutils.jobs.taskValues.set(key="continue_downstream", value=v)
-    print(f"continue_downstream=[{v}]")
 
 # COMMAND ----------
 # 1) If file exists, stop downstream
 try:
-    dbutils.fs.ls(dbfs_file)
-    set_gate("no")
-    print("File already exists -> aborting downstream tasks")
-except Exception:
+    dbutils.fs.ls(local_path)
+    
+    # If the file already exists then set continue_downstream to no
+    dbutils.jobs.taskValues.set(key="continue_downstream", value="no")
+    print("File already downloaded, aborting downstream tasks")
+except :
     try:
-        # 2) Ensure target directory exists
-        try:
-            dbutils.fs.ls(dbfs_dir)
-        except Exception:
-            dbutils.fs.mkdirs(dbfs_dir)
+        # Construct the URL for the Parquet file corresponding to this month
+        url = f"https://d37ci6vzurychx.cloudfront.net/trip-data/yellow_tripdata_{formatted_date}.parquet"
 
-        # 3) Download directly into DBFS/Volume
-        dbutils.fs.cp(url, dbfs_file)
-
-        set_gate("yes")
-        print("File successfully downloaded to Volume via dbutils.fs.cp(url, dst)")
+        # Download the file
+        # Create the local directory for this date's data
+        download_file(url, dir_path, local_path)
+        
+        # Set continue_downstream to yes if the file was loaded
+        dbutils.jobs.taskValues.set(key="continue_downstream", value="yes")
+        print("File succesfully uploaded in current run")
     except Exception as e:
-        set_gate("no")
-        print(f"Download failed: {type(e).__name__}: {str(e)}")
-
-# COMMAND ----------
-# Debug (only works inside Job runs)
-try:
-    v = dbutils.jobs.taskValues.get(taskKey=None, key="continue_downstream", debugValue="missing")
-    print(f"DEBUG saved continue_downstream=[{v}]")
-except Exception as e:
-    print(f"DEBUG skipped (not running as a Job task): {type(e).__name__}")
+        # Set continue downstream to no if the file was not loaded
+        dbutils.jobs.taskValues.set(key="continue_downstream", value="no")
+        print(f"File download failed: {str(e)}")
