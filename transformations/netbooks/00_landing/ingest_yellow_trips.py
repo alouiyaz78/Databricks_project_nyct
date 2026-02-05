@@ -1,6 +1,8 @@
 # Databricks notebook source
 import sys
 import os
+import urllib.request
+import shutil
 
 project_root = os.path.abspath(os.path.join(os.getcwd(), "../.."))
 if project_root not in sys.path:
@@ -8,28 +10,30 @@ if project_root not in sys.path:
 
 # COMMAND ----------
 from modules.utils.date_utils import get_target_yyyy_mm
-from modules.data_loader.file_downloader import download_file
 
 # COMMAND ----------
-# 3 months ago
+# Get target month (3 months ago)
 formatted_date = get_target_yyyy_mm(3)
 
-# Volume paths (logical)
+# Target paths in Unity Catalog Volume
 dir_path = f"/Volumes/nyctaxi/00_landing/data_sources/nyctaxi_yellow/{formatted_date}"
 local_path = f"{dir_path}/yellow_tripdata_{formatted_date}.parquet"
 
-# Paths for checks/writes
-dbfs_path = f"dbfs:{local_path}"         # for dbutils.fs.ls
-dir_path_local = f"/dbfs{dir_path}"      # for Python file writing
-local_path_local = f"/dbfs{local_path}"  # for Python file writing
+# DBFS-style path for dbutils.fs operations
+dbfs_dir = f"dbfs:{dir_path}"
+dbfs_file = f"dbfs:{local_path}"
 
+# Remote URL
 url = f"https://d37ci6vzurychx.cloudfront.net/trip-data/yellow_tripdata_{formatted_date}.parquet"
+
+# Temp local path (driver local disk)
+tmp_dir = f"/tmp/nyctaxi_yellow/{formatted_date}"
+tmp_file = f"{tmp_dir}/yellow_tripdata_{formatted_date}.parquet"
 
 print(f"formatted_date=[{formatted_date}]")
 print(f"url=[{url}]")
-print(f"dbfs_path=[{dbfs_path}]")
-print(f"dir_path_local=[{dir_path_local}]")
-print(f"local_path_local=[{local_path_local}]")
+print(f"dbfs_file=[{dbfs_file}]")
+print(f"tmp_file=[{tmp_file}]")
 
 # COMMAND ----------
 def set_gate(value: str) -> None:
@@ -38,22 +42,35 @@ def set_gate(value: str) -> None:
     print(f"continue_downstream=[{v}]")
 
 # COMMAND ----------
+# 1) Check if file exists already
 try:
-    dbutils.fs.ls(dbfs_path)
+    dbutils.fs.ls(dbfs_file)
     set_gate("no")
-    print("File already downloaded, aborting downstream tasks")
-
+    print("File already exists -> aborting downstream tasks")
 except Exception:
+    # 2) Download to /tmp
     try:
-        # ✅ IMPORTANT: write via /dbfs/... paths
-        download_file(url, dir_path_local, local_path_local)
+        os.makedirs(tmp_dir, exist_ok=True)
+        with urllib.request.urlopen(url) as response, open(tmp_file, "wb") as f:
+            shutil.copyfileobj(response, f)
 
+        print("Downloaded to /tmp successfully.")
+
+        # 3) Ensure target directory exists in the Volume (dbutils.fs)
+        try:
+            dbutils.fs.ls(dbfs_dir)
+        except Exception:
+            dbutils.fs.mkdirs(dbfs_dir)
+
+        # 4) Copy from local file to DBFS/Volume
+        dbutils.fs.cp(f"file:{tmp_file}", dbfs_file)
+
+        print("Copied file into Unity Catalog Volume successfully.")
         set_gate("yes")
-        print("File successfully uploaded in current run")
 
     except Exception as e:
         set_gate("no")
-        print(f"File download failed: {type(e).__name__}: {str(e)}")
+        print(f"File download/copy failed: {type(e).__name__}: {str(e)}")
 
 # COMMAND ----------
 # Debug (only works inside Job runs)
