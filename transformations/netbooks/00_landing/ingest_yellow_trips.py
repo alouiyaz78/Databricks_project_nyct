@@ -8,6 +8,7 @@ if project_root not in sys.path:
 
 # COMMAND ----------
 from modules.utils.date_utils import get_target_yyyy_mm
+from modules.data_loader.file_downloader import download_file
 
 # COMMAND ----------
 formatted_date = get_target_yyyy_mm(2)
