@@ -10,7 +10,7 @@ if project_root not in sys.path:
 from modules.utils.date_utils import get_target_yyyy_mm
 
 # COMMAND ----------
-formatted_date = get_target_yyyy_mm(3)
+formatted_date = get_target_yyyy_mm(2)
 
 dir_path = f"/Volumes/nyctaxi/00_landing/data_sources/nyctaxi_yellow/{formatted_date}"
 local_path = f"{dir_path}/yellow_tripdata_{formatted_date}.parquet"
