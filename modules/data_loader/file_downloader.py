@@ -2,7 +2,7 @@ import urllib.request
 import os
 import shutil
 
-def dowload_file (url:str,dir_path:str,local_apth:str):
+def download_file (url:str,dir_path:str,local_apth:str):
     """
     Downloads a file from a given URL to a specified local directory.
     """
