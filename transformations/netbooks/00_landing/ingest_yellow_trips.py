@@ -18,7 +18,7 @@ from modules.data_loader.file_downloader import download_file
 # COMMAND ----------
 # Get target month (2 months ago) in YYYY-MM format
 
-formatted_date = get_target_yyyymm(2)
+formatted_date = get_target_yyyy_mm(2)
 
 # COMMAND ----------
 # Define paths (Unity Catalog Volume)
