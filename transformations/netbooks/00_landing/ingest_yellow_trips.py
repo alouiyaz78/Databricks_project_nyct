@@ -13,7 +13,7 @@ from datetime import date
 from dateutil.relativedelta import relativedelta
 
 from modules.utils.date_utils import get_target_yyyy_mm
-from modules.data_loader.file_downloader import download_file
+from modules.data_loader.file_downloader import file_dowloader as download_file
 
 # COMMAND ----------
 # Get target month (2 months ago) in YYYY-MM format
