@@ -1,78 +1,56 @@
-### NYC Taxi Data ETL Pipeline
+# NYC Taxi Data ETL Pipeline on Databricks
 
-Overview
+A medallion-architecture ETL pipeline on NYC yellow taxi trip data, built with **Databricks, Delta Lake, PySpark and Spark SQL**. It was developed on Databricks Free Edition.
 
-This project implements a scalable ETL pipeline on NYC taxi trip data using Databricks, Delta Lake, and Spark SQL.
+## Goal
 
-It demonstrates:
+Turn raw taxi trip files into clean, enriched and aggregated tables that are ready for analysis, with both a one-off historical load and incremental monthly processing.
 
-Raw data ingestion → cleansing → enrichment → aggregation → export
+## What it demonstrates
 
-Handling historical and incremental data
+- Raw data ingestion, cleansing, enrichment, aggregation and export
+- Historical backfill and incremental processing
+- Modular PySpark notebooks with reusable helper functions
+- Delta Lake tables (ACID transactions) at every layer
+- Notebook orchestration with job gates
 
-Using modular PySpark notebooks and reusable helper functions
+## Architecture
 
-Designing production-ready data pipelines in the cloud
+```
+00_landing  ->  01_bronze  ->  02_silver  ->  03_gold  ->  04_export
+ raw files      raw tables     cleansed +     daily          analytics-ready
+ + lookups                     enriched       summaries      dataset
+```
 
+| Layer | Description | Notebooks / tables |
+|---|---|---|
+| 00_landing | Initial raw data and lookup tables | `backfill_historical_yellow_trips.py`, `load_taxi_zone_lookup.py` |
+| 01_bronze | Raw trip data ingestion | `yellow_trips_raw` |
+| 02_silver | Cleansing and enrichment (trips joined with the taxi zone lookup) | `taxi_zone_lookup`, `yellow_trips_cleansed`, `yellow_trips_enriched` |
+| 03_gold | Daily aggregated summaries | `daily_trip_summary` |
+| 04_export | Datasets exported for analytics | `yellow_trips_export` |
 
-Illustrative pipeline flow: Bronze → Silver → Gold → Export
+## Getting started
 
-# Project Structure
+1. Open the project in Databricks.
+2. Set up catalogs, schemas and volumes.
+3. Run the historical load notebooks (landing -> bronze -> silver -> gold -> export).
+4. Use the incremental notebooks for ongoing processing. Job gates (`set_continue_downstream`) stop or continue the downstream notebooks.
 
-Layer	Description	Notebooks / Tables
-00_landing	Initial raw data & lookup tables	backfill_historical_yellow_trips.py, load_taxi_zone_lookup.py
-01_bronze	Raw trip data ingestion	yellow_trips_raw
-02_silver	Cleansing & enrichment	taxi_zone_lookup, yellow_trips_cleansed, yellow_trips_enriched
-03_gold	Daily aggregated summaries	daily_trip_summary
-04_export	Export datasets for analytics	yellow_trips_export
-Getting Started
+## Helper functions
 
-Open the project in Databricks
+| Function | Purpose |
+|---|---|
+| `file_exists(path)` | Check that a file exists |
+| `download_file(url, dir_path, path)` | Fetch external data |
+| `add_processed_timestamp(df)` | Add an ETL processing timestamp |
+| `get_target_yyyymm(months_ago)` | Compute the target month for incremental loads |
+| `set_continue_downstream("yes"\|"no")` | Control notebook execution flow |
 
-Set up catalogs, schemas, and volumes
+## Development workflow
 
-Run historical load notebooks (landing → bronze → silver → gold → export)
+Code is written and tested in VS Code, pushed to GitHub, and the Databricks workspace is synchronised with GitHub for execution.
 
-Use incremental notebooks for ongoing processing with job gates (continue_downstream)
+## Skills and technologies
 
-Development Workflow & Tools
-
-VS Code: main IDE for writing and organizing PySpark notebooks and scripts
-
-GitHub: version control and repository synchronization
-
-Databricks: execution environment for ETL notebooks and Delta Lake tables
-
-# Workflow:
-
-Code is written and tested locally in VS Code
-
-Changes are committed and pushed to GitHub
-
-Databricks workspace is synchronized with GitHub for execution
-
-Helper Functions
-
-file_exists(path) – verify file existence
-
-download_file(url, dir_path, path) – fetch external data
-
-add_processed_timestamp(df) – add ETL processing timestamp
-
-get_target_yyyymm(months_ago) – compute target month for incremental loads
-
-set_continue_downstream("yes"|"no") – control notebook execution flow
-
-# Skills & Technologies
-
-Databricks workspace management and ETL orchestration
-
-Delta Lake CRUD operations and ACID-compliant pipelines
-
-PySpark & Spark SQL for large-scale transformations
-
-Incremental & historical data processing
-
-Data analysis, aggregation, and reporting
-
-Git & VS Code integration for professional workflow
+Databricks workspace and ETL orchestration, Delta Lake, PySpark, Spark SQL, incremental and historical processing, data aggregation and reporting, Git and VS Code.
